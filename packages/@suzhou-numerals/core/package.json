@@ -1,0 +1,56 @@
+{
+  "name": "@suzhou-numerals/core",
+  "version": "0.0.0",
+  "description": "Render any number as Suzhou numerals in SVG, with zero dependencies",
+  "keywords": [
+    "chinese",
+    "decimal",
+    "hangzhou-numerals",
+    "huama",
+    "number",
+    "numerals",
+    "suzhou",
+    "suzhou-numerals",
+    "svg"
+  ],
+  "homepage": "https://karlnorling.github.io/suzhou-numerals/",
+  "bugs": {
+    "url": "https://github.com/karlnorling/suzhou-numerals/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Karl Norling",
+    "url": "https://github.com/karlnorling"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karlnorling/suzhou-numerals.git",
+    "directory": "packages/@suzhou-numerals/core"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "!dist/**/*.tsbuildinfo",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "prepack": "yarn build"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2"
+  },
+  "engines": {
+    "node": ">= 20.0.0"
+  }
+}

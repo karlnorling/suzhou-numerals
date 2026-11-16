@@ -1,0 +1,71 @@
+---
+// The rainbow and Christmas examples, each linking to the playground with that look loaded.
+import { toSvg } from '@suzhou-numerals/core';
+import { system } from '../system';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const examples = [
+  { name: 'Rainbow', look: system.looks.rainbow },
+  { name: 'Christmas', look: system.looks.christmas },
+];
+
+const link = (look: (typeof examples)[number]['look']) => {
+  const params = new URLSearchParams({ n: look.value });
+  if (look.color) params.set('color', look.color);
+  if (look.background) params.set('bg', look.background);
+  return `${base}/playground/#${params}`;
+};
+---
+
+<div class="colour-examples not-content">
+  {
+    examples.map(({ name, look }) => (
+      <a href={link(look)} class="example">
+        <Fragment
+          set:html={toSvg(look.value, {
+            size: system.exampleSize,
+            title: false,
+            color: look.color,
+            background: look.background,
+          })}
+        />
+        <span>
+          {name} <code>{look.value}</code>
+        </span>
+      </a>
+    ))
+  }
+</div>
+
+<style>
+  .colour-examples {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: end;
+    gap: 1rem 2rem;
+    margin-block: 1.5rem;
+  }
+  .example {
+    display: grid;
+    justify-items: center;
+    gap: 0.4rem;
+    padding: 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.75rem;
+    color: var(--sl-color-white);
+    text-decoration: none;
+    font-size: var(--sl-text-sm);
+  }
+  .example:hover,
+  .example:focus-visible {
+    border-color: var(--sl-color-accent);
+  }
+  .example :global(svg) {
+    max-width: 100%;
+    height: auto;
+  }
+  code {
+    font-size: var(--sl-text-xs);
+  }
+</style>

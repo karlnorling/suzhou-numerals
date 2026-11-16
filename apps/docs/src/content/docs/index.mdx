@@ -1,0 +1,56 @@
+---
+title: Suzhou Numerals
+description: Render any number as Suzhou numerals in SVG, PNG, JPEG or WebP, from code or the command line.
+template: splash
+hero:
+  tagline: >-
+    Draw any number in the shorthand Chinese merchants wrote on price tags and invoices for centuries. SVG with zero dependencies, plus PNG, JPEG and WebP.
+  actions:
+    - text: Open the playground
+      link: /suzhou-numerals/playground/
+      icon: pencil
+    - text: Get started
+      link: /suzhou-numerals/getting-started/
+      icon: right-arrow
+      variant: secondary
+    - text: GitHub
+      link: https://github.com/karlnorling/suzhou-numerals
+      icon: github
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import Glyph from '../../components/Glyph.astro';
+import ColourExamples from '../../components/ColourExamples.astro';
+
+<div class="examples">
+  <Glyph value={1993} caption="1993" />
+  <Glyph value={21} caption="21" />
+  <Glyph value={305} caption="305" />
+  <Glyph value={'40.22'} caption="40.22" />
+  <Glyph value={-42} caption="-42" />
+</div>
+
+<ColourExamples />
+
+<CardGrid>
+  <Card title="Try any number" icon="pencil">
+    The [playground](/suzhou-numerals/playground/) draws whatever you type, breaks it into base-10
+    digits, and lets you download SVG, PNG, JPEG or WebP.
+  </Card>
+  <Card title="Readable runs" icon="add-document">
+    Neighbouring 1s, 2s and 3s alternate upright and flat, the way Suzhou writers keep them apart.
+    [See how](/suzhou-numerals/how-it-works/).
+  </Card>
+  <Card title="Zero dependencies" icon="seti:svg">
+    `@suzhou-numerals/core` turns a number into an SVG string in any JavaScript runtime.
+  </Card>
+  <Card title="Images and CLI" icon="seti:image">
+    `@suzhou-numerals/raster` renders PNG, JPEG and WebP with sharp, and `@suzhou-numerals/cli` does
+    it from the terminal.
+  </Card>
+</CardGrid>
+
+<style>{`
+  .examples { display: flex; flex-wrap: wrap; justify-content: center; align-items: end; gap: 2rem; margin-block: 1rem 2.5rem; }
+`}</style>

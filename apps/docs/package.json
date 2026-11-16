@@ -1,0 +1,21 @@
+{
+  "name": "@suzhou-numerals-docs/app",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 4322",
+    "build": "astro build",
+    "preview": "astro preview",
+    "type-check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.42.10",
+    "@suzhou-numerals/core": "workspace:*",
+    "astro": "^7.4.7"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "typescript": "^6.0.2"
+  }
+}

@@ -1,0 +1,31 @@
+---
+title: '@suzhou-numerals/cli'
+description: Draw numbers as Suzhou numerals from the command line.
+---
+
+```sh
+npx @suzhou-numerals/cli 1993 > 1993.svg
+npx @suzhou-numerals/cli 40.22 -o price.webp --size 200
+npx @suzhou-numerals/cli -42 -o minus.png
+```
+
+Installed globally with `npm install -g @suzhou-numerals/cli`, the command is `suzhou`. The output format comes from the file extension. Without `--output`, it prints SVG.
+
+| Option                     | Notes                                                                     |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `-o, --output <file>`      | `.svg`, `.png`, `.jpg`, `.jpeg` or `.webp`.                               |
+| `-s, --size <px>`          | Image height in pixels. Default 100.                                      |
+| `-c, --color <color>`      | Colour or CSS gradient. Default `currentColor` for SVG, black for images. |
+| `-b, --background <color>` | Background colour or CSS gradient. Default transparent, white for JPEG.   |
+| `-g, --gap <n>`            | Space between digits. Default 12.                                         |
+| `--no-alternate`           | Keep neighbouring 1s, 2s and 3s upright.                                  |
+| `-q, --quality <1-100>`    | JPEG and WebP quality.                                                    |
+
+Gradients use CSS syntax. Quote them for the shell:
+
+```sh
+suzhou 1234567 -o rainbow.png \
+  -c 'linear-gradient(to right, #e03131, #f76707, #fab005, #40c057, #228be6, #7048e8, #be4bdb)'
+```
+
+Exits with `1` when the number can't be drawn and `2` for a usage error.

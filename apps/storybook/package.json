@@ -1,0 +1,22 @@
+{
+  "name": "@suzhou-numerals-storybook/app",
+  "private": true,
+  "description": "Storybook for the Suzhou numeral packages",
+  "type": "module",
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@suzhou-numerals/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "^10.6.6",
+    "@storybook/addon-docs": "^10.6.6",
+    "@storybook/html-vite": "^10.6.6",
+    "storybook": "^10.6.6",
+    "typescript": "^6.0.2",
+    "vite": "^8.3.6"
+  }
+}
