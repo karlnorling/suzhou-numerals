@@ -1,0 +1,17 @@
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+.pnp.*
+node_modules
+dist/
+coverage/
+.DS_Store
+package.tgz
+
+# Docs and Storybook builds
+storybook-static/
+apps/docs/.astro/
