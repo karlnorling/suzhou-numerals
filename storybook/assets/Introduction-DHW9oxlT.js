@@ -1,0 +1,9 @@
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t}from"./chunk-W22LQPXL-D4uv3rSz.js";import{i as n,r}from"./react-DITjJg24.js";import{a as i,o as a}from"./blocks-B9FJYUPn.js";function o(e){let t={a:`a`,code:`code`,h1:`h1`,li:`li`,p:`p`,strong:`strong`,ul:`ul`,...n(),...e.components};return(0,c.jsxs)(c.Fragment,{children:[(0,c.jsx)(i,{title:`Introduction`}),`
+`,(0,c.jsx)(t.h1,{id:`suzhou-numerals`,children:`Suzhou Numerals`}),`
+`,(0,c.jsxs)(t.p,{children:[`Stories for `,(0,c.jsx)(t.a,{href:`https://www.npmjs.com/package/@suzhou-numerals/core`,rel:`nofollow`,children:(0,c.jsx)(t.code,{children:`@suzhou-numerals/core`})}),`, which renders any number as `,(0,c.jsx)(t.a,{href:`https://en.wikipedia.org/wiki/Suzhou_numerals`,rel:`nofollow`,children:`Suzhou numerals`}),` in SVG.`]}),`
+`,(0,c.jsxs)(t.ul,{children:[`
+`,(0,c.jsxs)(t.li,{children:[(0,c.jsx)(t.strong,{children:`Number Builder`}),`: type any number in the `,(0,c.jsx)(t.code,{children:`value`}),` control and adjust every `,(0,c.jsx)(t.code,{children:`toSvg`}),` option.`]}),`
+`,(0,c.jsxs)(t.li,{children:[(0,c.jsx)(t.strong,{children:`Digits`}),`: every digit from 0 to 9.`]}),`
+`]}),`
+`,(0,c.jsx)(t.p,{children:`Zero is a circle, 1 to 3 are bars, 4 is a cross, and 5 to 9 put an upright bar on top of 0 to 4. Neighbouring 1s, 2s and 3s alternate upright and flat. A dot marks the decimal point, and negatives get a diagonal stroke.`}),`
+`,(0,c.jsxs)(t.p,{children:[`For downloads and shareable links, use the `,(0,c.jsx)(t.a,{href:`../playground/`,children:`playground`}),` in the docs.`]})]})}function s(e={}){let{wrapper:t}={...n(),...e.components};return t?(0,c.jsx)(t,{...e,children:(0,c.jsx)(o,{...e})}):o(e)}var c;function l(){return(l=e((()=>{c=t(),r(),a()})))()}l();export{s as default};
