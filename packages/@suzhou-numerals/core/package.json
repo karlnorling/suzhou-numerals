@@ -1,6 +1,6 @@
 {
   "name": "@suzhou-numerals/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Render any number as Suzhou numerals in SVG, with zero dependencies",
   "keywords": [
     "chinese",

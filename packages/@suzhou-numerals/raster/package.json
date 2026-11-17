@@ -1,6 +1,6 @@
 {
   "name": "@suzhou-numerals/raster",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Render any number as Suzhou numerals in PNG, JPEG or WebP",
   "keywords": [
     "chinese",
