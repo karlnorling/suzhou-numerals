@@ -1,0 +1,69 @@
+---
+title: Getting started
+description: Install the package you need and draw your first Suzhou numeral.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Pick the package for where you render:
+
+| Package                                                        | Use it for                                                                |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| [`@suzhou-numerals/core`](/suzhou-numerals/packages/core/)     | SVG strings in any JavaScript runtime, browser included. No dependencies. |
+| [`@suzhou-numerals/raster`](/suzhou-numerals/packages/raster/) | PNG, JPEG or WebP in Node. Uses sharp.                                    |
+| [`@suzhou-numerals/cli`](/suzhou-numerals/packages/cli/)       | Files from the terminal or scripts.                                       |
+
+## SVG
+
+<Tabs syncKey="pm">
+  <TabItem label="npm">
+
+```sh
+npm install @suzhou-numerals/core
+```
+
+  </TabItem>
+  <TabItem label="yarn">
+
+```sh
+yarn add @suzhou-numerals/core
+```
+
+  </TabItem>
+  <TabItem label="pnpm">
+
+```sh
+pnpm add @suzhou-numerals/core
+```
+
+  </TabItem>
+</Tabs>
+
+```js
+import { toSvg } from '@suzhou-numerals/core';
+
+document.querySelector('#year').innerHTML = toSvg(new Date().getFullYear(), { size: 120 });
+```
+
+The SVG uses `currentColor` by default, so it takes the colour of the text around it.
+
+## Images
+
+```sh
+npm install @suzhou-numerals/raster
+```
+
+```js
+import { toImage } from '@suzhou-numerals/raster';
+import { writeFile } from 'node:fs/promises';
+
+await writeFile('1993.webp', await toImage(1993, { format: 'webp', size: 400 }));
+```
+
+## Command line
+
+```sh
+npx @suzhou-numerals/cli 1993 -o 1993.png --size 200
+```
+
+Not sure what a number will look like? Try it in the [playground](/suzhou-numerals/playground/).

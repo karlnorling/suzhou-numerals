@@ -1,0 +1,8 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "paths": {
+      "@suzhou-numerals/core": ["../../packages/@suzhou-numerals/core/src/index.ts"]
+    }
+  }
+}

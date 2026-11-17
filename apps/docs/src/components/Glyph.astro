@@ -1,0 +1,33 @@
+---
+// Renders a number at build time. Inherits the text colour, so it follows the theme.
+import { toSvg, type NumberInput, type SvgOptions } from '@suzhou-numerals/core';
+
+interface Props extends SvgOptions {
+  value: NumberInput;
+  caption?: string;
+}
+
+const { value, caption, ...options } = Astro.props;
+const svg = toSvg(value, { size: 72, ...options });
+---
+
+<figure class="glyph not-content">
+  <Fragment set:html={svg} />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .glyph {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    color: var(--sl-color-white);
+  }
+  figcaption {
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-2);
+  }
+</style>

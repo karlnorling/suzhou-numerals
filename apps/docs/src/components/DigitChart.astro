@@ -1,0 +1,47 @@
+---
+// Every digit of the system, in one place value.
+import { digitSvg } from '@suzhou-numerals/core';
+import { system } from '../system';
+
+interface Props {
+  /** The power of the base the digits sit in. It changes how some systems draw a digit. */
+  place?: number;
+  size?: number;
+}
+
+const { place = 0, size = system.chartSize } = Astro.props;
+const digits = Array.from({ length: system.base }, (_, digit) => digit);
+---
+
+<div class="chart not-content">
+  {
+    digits.map((digit) => (
+      <figure>
+        <Fragment set:html={digitSvg(digit, place, { size, title: String(digit) })} />
+        <figcaption>{digit}</figcaption>
+      </figure>
+    ))
+  }
+</div>
+
+<style>
+  .chart {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+    gap: 0.75rem;
+    margin-block: 1.25rem;
+    color: var(--sl-color-white);
+  }
+  figure {
+    display: grid;
+    justify-items: center;
+    align-content: end;
+    gap: 0.25rem;
+    margin: 0;
+  }
+  figcaption {
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-2);
+  }
+</style>

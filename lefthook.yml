@@ -1,0 +1,14 @@
+pre-commit:
+  commands:
+    format:
+      run: yarn format
+
+pre-push:
+  parallel: true
+  commands:
+    type-check:
+      run: yarn type-check
+    test:
+      run: yarn test
+    lint:
+      run: yarn lint

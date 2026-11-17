@@ -1,0 +1,26 @@
+{
+  "plugins": ["typescript", "unicorn", "import", "promise", "vitest"],
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "rules": {
+    "no-console": "off",
+    "no-undef": "off",
+    "typescript/no-explicit-any": "warn",
+    "typescript/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports"
+      }
+    ],
+    "typescript/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "ignorePatterns": ["dist", "node_modules", "coverage", "storybook-static", "apps/docs/.astro"]
+}

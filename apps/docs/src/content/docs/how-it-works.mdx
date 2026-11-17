@@ -1,0 +1,54 @@
+---
+title: How numbers are drawn
+description: The ten Suzhou digits, how neighbouring 1s, 2s and 3s are kept apart, and how this library draws decimals and negatives.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Glyph from '../../components/Glyph.astro';
+import DigitChart from '../../components/DigitChart.astro';
+
+Suzhou numerals (蘇州碼子, also called 花碼) are a merchants' shorthand that grew out of [counting rods](https://karlnorling.github.io/counting-rods/). They were written on price tags, invoices and pharmacy labels, and they still turn up in Hong Kong markets.
+
+## The digits
+
+Zero is a circle, one to three are bars, and four is a cross. Five to nine take zero to four and put an upright bar on top: five is a bar over a circle, six to eight a bar over one to three flat strokes, and nine a bar over the cross.
+
+<DigitChart />
+
+## Places
+
+Digits run left to right, most significant first, one per decimal place.
+
+<div class="row">
+  <Glyph value={1993} caption="1993" />
+  <Glyph value={305} caption="305" />
+  <Glyph value={2026} caption="2026" />
+</div>
+
+## Neighbouring 1s, 2s and 3s
+
+Three upright bars could be 3, or 2 next to 1, or 1, 1, 1. So in a run of 1s, 2s and 3s, writers turn every second one flat, borrowing the ordinary characters 一, 二 and 三. 21 is written 〢一. `alternate: false` turns the rule off.
+
+<div class="row">
+  <Glyph value={21} caption="21" />
+  <Glyph value={21} alternate={false} caption="21, all upright" />
+  <Glyph value={1123} caption="1123" />
+</div>
+
+## Decimals and negatives
+
+On a price tag, a second line names the magnitude and unit of the first digit, such as 十元 for tens of dollars, and that fixes where the decimal point goes. This library puts a dot on the baseline instead. Negative numbers get a diagonal stroke across the last digit, the sign used on counting rods.
+
+<div class="row">
+  <Glyph value="40.22" caption="40.22" />
+  <Glyph value={-42} caption="-42" />
+</div>
+
+<Aside>
+  Unicode has the Suzhou digits as 〡 to 〩 (U+3021–3029), plus 〸, 〹 and 〺 for 10, 20 and 30.
+  This library draws its own strokes, so the output doesn't depend on fonts.
+</Aside>
+
+<style>{`
+  .row { display: flex; flex-wrap: wrap; gap: 2rem; align-items: end; margin-block: 1.5rem; }
+`}</style>

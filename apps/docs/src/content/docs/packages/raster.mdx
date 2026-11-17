@@ -1,0 +1,31 @@
+---
+title: '@suzhou-numerals/raster'
+description: Render numbers as Suzhou numerals in PNG, JPEG or WebP, using sharp.
+---
+
+```sh
+npm install @suzhou-numerals/raster
+```
+
+## `toImage(value, options?)`
+
+Returns a `Promise<Buffer>`.
+
+```js
+import { toImage } from '@suzhou-numerals/raster';
+import { writeFile } from 'node:fs/promises';
+
+await writeFile('1993.png', await toImage(1993));
+await writeFile('pi.webp', await toImage('3.14159', { format: 'webp', size: 400, quality: 90 }));
+```
+
+Takes every [`toSvg` option](/suzhou-numerals/packages/core/#tosvgvalue-options), plus:
+
+| Option    | Default         | Notes                                |
+| --------- | --------------- | ------------------------------------ |
+| `format`  | `png`           | `png`, `jpeg`, `jpg` or `webp`.      |
+| `quality` | sharp's default | JPEG and WebP quality from 1 to 100. |
+
+Colours default to black, since `currentColor` has no meaning in an image. JPEG has no transparency, so it gets a white background unless you pass one.
+
+This package runs in Node only. In the browser, draw the SVG from `@suzhou-numerals/core` onto a canvas, as the [playground](/suzhou-numerals/playground/) does.

@@ -1,0 +1,42 @@
+{
+  "name": "suzhou-numerals-monorepo",
+  "private": true,
+  "description": "Render any number as Suzhou numerals: SVG, PNG, JPEG and WebP, from code or the command line",
+  "workspaces": [
+    "packages/@suzhou-numerals/*",
+    "apps/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "audit-actions": "node scripts/audit-action-inputs.mjs",
+    "build": "yarn workspaces foreach -A --topological-dev --no-private run build",
+    "build-docs": "yarn workspace @suzhou-numerals-docs/app build",
+    "build-storybook": "yarn workspace @suzhou-numerals-storybook/app build-storybook",
+    "changeset": "changeset",
+    "docs": "yarn workspace @suzhou-numerals-docs/app dev",
+    "examples": "yarn build && node scripts/examples.mjs",
+    "format": "oxfmt --write --ignore-path=.oxfmtignore .",
+    "format:check": "oxfmt --check --ignore-path=.oxfmtignore .",
+    "lint": "oxlint .",
+    "prepare": "lefthook install",
+    "storybook": "yarn workspace @suzhou-numerals-storybook/app storybook",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "version-packages": "changeset version && yarn install --mode=update-lockfile && yarn format"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.3",
+    "@types/node": "^26.6.6",
+    "lefthook": "^2.2.2",
+    "oxfmt": "^0.77.0",
+    "oxlint": "^1.92.0",
+    "typescript": "^6.0.2",
+    "vite": "^8.3.7",
+    "vitest": "^5.0.0",
+    "yaml": "^2.9.1"
+  },
+  "engines": {
+    "node": ">= 24.0.0"
+  },
+  "packageManager": "yarn@4.18.1"
+}

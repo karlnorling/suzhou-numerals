@@ -1,0 +1,690 @@
+---
+// Type any number and see it drawn, with style controls, the digit-by-digit breakdown,
+// matching code, and downloads. State lives in the URL hash so a number can be shared.
+import { system } from '../system';
+
+// Colour and background share one control: a mode, two colour pickers, an angle and a CSS field.
+const paints = [
+  { id: 'color', label: 'Colour', first: { value: 'theme', label: 'Match theme' }, a: '#e03131', b: '#7048e8' },
+  { id: 'bg', label: 'Background', first: { value: 'none', label: 'None' }, a: '#fff9db', b: '#ffd8a8' },
+];
+const modes = [
+  { value: 'solid', label: 'Solid' },
+  { value: 'linear', label: 'Linear gradient' },
+  { value: 'radial', label: 'Radial gradient' },
+  { value: 'css', label: 'CSS' },
+];
+---
+
+<div class="playground not-content">
+  <form class="controls" id="pg-form" autocomplete="off">
+    <label class="number">
+      <span>Number</span>
+      <input
+        id="pg-value"
+        name="n"
+        type="text"
+        inputmode="decimal"
+        value={system.presets[0]}
+        spellcheck="false"
+        aria-describedby="pg-error"
+      />
+    </label>
+    <p class="error" id="pg-error" role="alert" hidden></p>
+
+    <div class="presets" role="group" aria-label="Examples">
+      {system.presets.map((p) => <button type="button" data-preset={p}>{p}</button>)}
+      <button type="button" data-preset="random">Random</button>
+    </div>
+
+    <details open>
+      <summary>Style</summary>
+      <div class="grid">
+        <label>
+          <span>{system.sizeLabel} <output id="pg-size-out">{system.sizeDefault}</output>px</span>
+          <input
+            id="pg-size"
+            type="range"
+            min="40"
+            max="400"
+            step="4"
+            value={system.sizeDefault}
+          />
+        </label>
+        <label>
+          <span>Gap <output id="pg-gap-out">{system.gapDefault}</output></span>
+          <input id="pg-gap" type="range" min="0" max="80" step="2" value={system.gapDefault} />
+        </label>
+        {
+          system.extras.map((extra) =>
+            extra.type === 'select' ? (
+              <label>
+                <span>{extra.label}</span>
+                <select data-extra={extra.key}>
+                  {extra.options!.map((o) => (
+                    <option value={o.value} selected={o.value === extra.default}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <label class="check">
+                <input type="checkbox" data-extra={extra.key} checked={extra.default === true} />
+                <span>{extra.label}</span>
+              </label>
+            ),
+          )
+        }
+        {
+          paints.map((p) => (
+            <fieldset class="paint" id={`pg-${p.id}`} data-mode={p.first.value}>
+              <legend>{p.label}</legend>
+              <select id={`pg-${p.id}-mode`} aria-label={`${p.label} type`}>
+                <option value={p.first.value}>{p.first.label}</option>
+                {modes.map((m) => (
+                  <option value={m.value}>{m.label}</option>
+                ))}
+              </select>
+              <input id={`pg-${p.id}-a`} type="color" value={p.a} aria-label={`${p.label}, first colour`} data-show="solid linear radial" />
+              <input id={`pg-${p.id}-b`} type="color" value={p.b} aria-label={`${p.label}, second colour`} data-show="linear radial" />
+              <label class="angle" data-show="linear">
+                <span>
+                  <output id={`pg-${p.id}-angle-out`}>90</output>°
+                </span>
+                <input id={`pg-${p.id}-angle`} type="range" min="0" max="360" step="15" value="90" aria-label={`${p.label} gradient angle`} />
+              </label>
+              <input
+                id={`pg-${p.id}-css`}
+                class="css"
+                type="text"
+                spellcheck="false"
+                placeholder="repeating-linear-gradient(45deg, red 0 5%, white 5% 10%)"
+                aria-label={`${p.label} as CSS`}
+                data-show="css"
+              />
+            </fieldset>
+          ))
+        }
+      </div>
+      <div class="looks" role="group" aria-label="Looks">
+        <span>Looks</span>
+        <button type="button" data-look="plain">Plain</button>
+        <button type="button" data-look="rainbow">Rainbow</button>
+        <button type="button" data-look="christmas">Christmas</button>
+      </div>
+    </details>
+  </form>
+
+  <div class="stage" id="pg-stage" aria-live="polite"></div>
+
+  <section class="breakdown" aria-labelledby="pg-breakdown-title">
+    <h3 id="pg-breakdown-title">Digit by digit, in base {system.base}</h3>
+    <ol class="groups" id="pg-groups"></ol>
+  </section>
+
+  <div class="actions">
+    <button type="button" data-download="svg">Download SVG</button>
+    <button type="button" data-download="png">PNG</button>
+    <button type="button" data-download="jpeg">JPEG</button>
+    <button type="button" data-download="webp">WebP</button>
+    <button type="button" id="pg-copy">Copy SVG</button>
+    <button type="button" id="pg-link">Copy link</button>
+    <span class="status" id="pg-status" role="status"></span>
+  </div>
+
+  <section class="code" aria-label="Code for this image">
+    <pre><code id="pg-code-js"></code></pre>
+    <pre><code id="pg-code-cli"></code></pre>
+  </section>
+</div>
+
+<script>
+  import {
+    digitSvg,
+    format,
+    parse,
+    parseGradient,
+    toSvg,
+    type SvgOptions,
+  } from '@suzhou-numerals/core';
+  import { system } from '../system';
+
+  type Options = SvgOptions & Record<string, unknown>;
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const form = $<HTMLFormElement>('pg-form');
+  const value = $<HTMLInputElement>('pg-value');
+  const error = $<HTMLParagraphElement>('pg-error');
+  const size = $<HTMLInputElement>('pg-size');
+  const gap = $<HTMLInputElement>('pg-gap');
+  const stage = $<HTMLDivElement>('pg-stage');
+  const groups = $<HTMLOListElement>('pg-groups');
+  const status = $<HTMLSpanElement>('pg-status');
+  const extras = [...document.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-extra]')];
+
+  let current = { input: system.presets[0]!, options: {} as Options };
+
+  /** One colour control: `color` or `bg`. */
+  function paint(id: 'color' | 'bg') {
+    const field = (name: string) => $<HTMLInputElement>(`pg-${id}-${name}`);
+    const mode = $<HTMLSelectElement>(`pg-${id}-mode`);
+    const [a, b, angle, css] = ['a', 'b', 'angle', 'css'].map(field) as HTMLInputElement[];
+    const none = id === 'color' ? 'currentColor' : undefined;
+    return {
+      /** The paint for toSvg: a colour, a gradient string, or the default. */
+      get(): string | undefined {
+        $(`pg-${id}`).dataset.mode = mode.value;
+        $(`pg-${id}-angle-out`).textContent = angle!.value;
+        switch (mode.value) {
+          case 'solid':
+            return a!.value;
+          case 'linear':
+            return `linear-gradient(${angle!.value}deg, ${a!.value}, ${b!.value})`;
+          case 'radial':
+            return `radial-gradient(${a!.value}, ${b!.value})`;
+          case 'css':
+            return css!.value.trim() || none;
+          default:
+            return none;
+        }
+      },
+      /** Shows a paint string in the simplest mode that can hold it. */
+      set(text: string | undefined) {
+        const hex = '(#[0-9a-f]{6})';
+        const linear = new RegExp(`^linear-gradient\\((\\d+)deg, ${hex}, ${hex}\\)$`, 'i').exec(text ?? '');
+        const radial = new RegExp(`^radial-gradient\\(${hex}, ${hex}\\)$`, 'i').exec(text ?? '');
+        if (text === undefined || text === none) mode.value = id === 'color' ? 'theme' : 'none';
+        else if (new RegExp(`^${hex}$`, 'i').test(text)) {
+          mode.value = 'solid';
+          a!.value = text;
+        } else if (linear) {
+          mode.value = 'linear';
+          [, angle!.value, a!.value, b!.value] = linear as unknown as string[];
+        } else if (radial) {
+          mode.value = 'radial';
+          [, a!.value, b!.value] = radial as unknown as string[];
+        } else {
+          mode.value = 'css';
+          css!.value = text;
+        }
+      },
+    };
+  }
+  const colorPaint = paint('color');
+  const bgPaint = paint('bg');
+
+  function extraValue(el: HTMLInputElement | HTMLSelectElement) {
+    return el instanceof HTMLInputElement && el.type === 'checkbox' ? el.checked : el.value;
+  }
+  function setExtra(el: HTMLInputElement | HTMLSelectElement, v: string | boolean) {
+    if (el instanceof HTMLInputElement && el.type === 'checkbox') el.checked = v === true || v === 'true';
+    else el.value = String(v);
+  }
+  const extraDefault = (key: string) => system.extras.find((e) => e.key === key)!.default;
+
+  function options(): Options {
+    const opts: Options = {
+      size: Number(size.value),
+      gap: Number(gap.value),
+      color: colorPaint.get()!,
+      background: bgPaint.get(),
+    };
+    for (const el of extras) opts[el.dataset.extra!] = extraValue(el);
+    return opts;
+  }
+
+  function render() {
+    $('pg-size-out').textContent = size.value;
+    $('pg-gap-out').textContent = gap.value;
+
+    const input = value.value.trim();
+    const opts = options();
+    let svg: string;
+    let parsed: ReturnType<typeof parse>;
+    try {
+      parsed = parse(input);
+      svg = toSvg(input, opts);
+    } catch (e) {
+      error.textContent = (e as Error).message;
+      error.hidden = false;
+      value.setAttribute('aria-invalid', 'true');
+      return;
+    }
+    error.hidden = true;
+    value.removeAttribute('aria-invalid');
+    current = { input, options: opts };
+    stage.innerHTML = svg;
+    renderGroups(parsed, opts);
+    renderCode(input, opts);
+    saveHash();
+  }
+
+  function renderGroups(parsed: ReturnType<typeof parse>, opts: Options) {
+    const mini = { ...opts, size: system.miniSize, padding: 6, title: false as const, background: undefined, color: miniColor(opts.color) };
+    const item = (digit: number, power: number, place: string) =>
+      `<li>${digitSvg(digit, power, mini)}<code>${digit}</code><small>${place}</small></li>`;
+    const sup = (n: number) => (n > 1 ? `<sup>${n}</sup>` : '');
+
+    const items: string[] = [];
+    const count = parsed.integer.length;
+    parsed.integer.forEach((digit, i) => {
+      const power = count - 1 - i;
+      items.push(item(digit, power, power === 0 ? 'ones' : `× ${system.base}${sup(power)}`));
+    });
+    if (parsed.fraction.length > 0) {
+      items.push('<li class="dot" aria-label="point"><span></span></li>');
+      parsed.fraction.forEach((digit, i) => items.push(item(digit, -(i + 1), `÷ ${system.base}${sup(i + 1)}`)));
+    }
+    groups.innerHTML = items.join('');
+    groups.setAttribute(
+      'aria-label',
+      `${parsed.negative ? 'minus ' : ''}${format({ ...parsed, negative: false })} as ${count + parsed.fraction.length} base-${system.base} digits`,
+    );
+  }
+
+  /** Small digits have no room for a gradient, so they take the text colour instead. */
+  function miniColor(color: SvgOptions['color']) {
+    return typeof color === 'string' && !parseGradient(color) ? color : 'currentColor';
+  }
+
+  function renderCode(input: string, opts: Options) {
+    const changed: string[] = [];
+    const flags = [`-o number.svg`, `--size ${opts.size}`];
+    if (opts.size !== 100) changed.push(`size: ${opts.size}`);
+    if (opts.gap !== system.gapDefault) {
+      changed.push(`gap: ${opts.gap}`);
+      flags.push(`--gap ${opts.gap}`);
+    }
+    for (const extra of system.extras) {
+      const v = opts[extra.key];
+      if (v === extra.default) continue;
+      changed.push(`${extra.key}: ${typeof v === 'string' ? `'${v}'` : v}`);
+      // A boolean flag always switches away from the default.
+      flags.push(typeof v === 'boolean' ? extra.flag : `${extra.flag} ${v}`);
+    }
+    if (opts.color !== 'currentColor') {
+      changed.push(`color: '${opts.color}'`);
+      flags.push(`--color '${opts.color}'`);
+    }
+    if (opts.background) {
+      changed.push(`background: '${opts.background}'`);
+      flags.push(`--background '${opts.background}'`);
+    }
+    const arg = /^-?\d+(\.\d+)?$/.test(input) && input.replace(/^-/, '').length < 16 ? input : `'${input}'`;
+    $('pg-code-js').textContent =
+      `import { toSvg } from '@suzhou-numerals/core';\n\n` +
+      `const svg = toSvg(${arg}${changed.length ? `, { ${changed.join(', ')} }` : ''});`;
+    $('pg-code-cli').textContent = `npx @suzhou-numerals/cli ${input} ${flags.join(' ')}`;
+  }
+
+  // --- URL state -----------------------------------------------------------------------
+  function saveHash() {
+    const params = new URLSearchParams({ n: value.value.trim() });
+    if (size.value !== String(system.sizeDefault)) params.set('size', size.value);
+    if (gap.value !== String(system.gapDefault)) params.set('gap', gap.value);
+    for (const el of extras) {
+      const v = extraValue(el);
+      if (v !== extraDefault(el.dataset.extra!)) params.set(el.dataset.extra!, String(v));
+    }
+    const { color, background } = current.options;
+    if (color !== 'currentColor') params.set('color', String(color));
+    if (background) params.set('bg', String(background));
+    history.replaceState(null, '', `#${params}`);
+  }
+
+  function loadHash() {
+    const params = new URLSearchParams(location.hash.slice(1));
+    const set = (el: HTMLInputElement, key: string) => {
+      const v = params.get(key);
+      if (v !== null) el.value = v;
+    };
+    set(value, 'n');
+    set(size, 'size');
+    set(gap, 'gap');
+    for (const el of extras) {
+      const v = params.get(el.dataset.extra!);
+      setExtra(el, v ?? extraDefault(el.dataset.extra!));
+    }
+    colorPaint.set(params.get('color') ?? undefined);
+    bgPaint.set(params.get('bg') ?? undefined);
+  }
+
+  // --- Output --------------------------------------------------------------------------
+  /** The SVG with a concrete colour, since currentColor means nothing outside the page. */
+  function standaloneSvg() {
+    const resolved = getComputedStyle(stage).color;
+    const colour = current.options.color === 'currentColor' ? resolved : current.options.color;
+    return toSvg(current.input, { ...current.options, color: colour });
+  }
+
+  async function rasterise(type: 'png' | 'jpeg' | 'webp'): Promise<Blob> {
+    const svg = standaloneSvg();
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      const scale = window.devicePixelRatio > 1 ? 2 : 1;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(img.naturalWidth * scale);
+      canvas.height = Math.ceil(img.naturalHeight * scale);
+      const ctx = canvas.getContext('2d')!;
+      if (type === 'jpeg' && !current.options.background) {
+        ctx.fillStyle = '#ffffff'; // JPEG has no transparency
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, `image/${type}`, 0.92));
+      if (!blob || blob.type !== `image/${type}`) {
+        throw new Error(`This browser can't export ${type.toUpperCase()}`);
+      }
+      return blob;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function save(blob: Blob, ext: string) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `suzhou-numerals-${current.input.replace(/[^\d.-]/g, '') || 'number'}.${ext}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  function say(text: string) {
+    status.textContent = text;
+    setTimeout(() => {
+      if (status.textContent === text) status.textContent = '';
+    }, 2500);
+  }
+
+  // --- Events --------------------------------------------------------------------------
+  form.addEventListener('input', render);
+  form.addEventListener('change', render);
+  form.addEventListener('submit', (e) => e.preventDefault());
+
+  document.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const preset = button.dataset.preset!;
+      value.value = preset === 'random' ? String(Math.floor(Math.random() * system.randomMax) + 1) : preset;
+      render();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const look = system.looks[button.dataset.look as keyof typeof system.looks];
+      colorPaint.set(look.color);
+      bgPaint.set(look.background);
+      render();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-download]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const type = button.dataset.download as 'svg' | 'png' | 'jpeg' | 'webp';
+      try {
+        if (type === 'svg') save(new Blob([standaloneSvg()], { type: 'image/svg+xml' }), 'svg');
+        else save(await rasterise(type), type === 'jpeg' ? 'jpg' : type);
+      } catch (e) {
+        say((e as Error).message);
+      }
+    });
+  });
+
+  $('pg-copy').addEventListener('click', async () => {
+    await navigator.clipboard.writeText(standaloneSvg());
+    say('SVG copied');
+  });
+  $('pg-link').addEventListener('click', async () => {
+    await navigator.clipboard.writeText(location.href);
+    say('Link copied');
+  });
+
+  // Example links on this page change only the hash, which doesn't reload the page.
+  window.addEventListener('hashchange', () => {
+    loadHash();
+    render();
+    stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  loadHash();
+  render();
+</script>
+
+<style>
+  .playground {
+    display: grid;
+    /* minmax(0, …) so long code lines scroll inside their block, not the page. */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+    margin-block: 1.5rem;
+  }
+  .controls {
+    display: grid;
+    gap: 0.75rem;
+  }
+  label {
+    display: grid;
+    gap: 0.25rem;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-2);
+  }
+  .number input {
+    font: 600 var(--sl-text-2xl) / 1.2 var(--sl-font-mono);
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    background: var(--sl-color-black);
+    color: var(--sl-color-white);
+    width: 100%;
+  }
+  .number input[aria-invalid='true'] {
+    border-color: var(--sl-color-red);
+  }
+  .error {
+    margin: 0;
+    color: var(--sl-color-red);
+    font-size: var(--sl-text-sm);
+  }
+  .presets,
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  button {
+    font: inherit;
+    font-size: var(--sl-text-sm);
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 999px;
+    background: var(--sl-color-gray-6);
+    color: var(--sl-color-white);
+    cursor: pointer;
+  }
+  .presets button {
+    font-family: var(--sl-font-mono);
+  }
+  button:hover {
+    border-color: var(--sl-color-accent);
+  }
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 2px;
+  }
+  details {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: 0.75rem 1.25rem;
+    margin-top: 0.75rem;
+  }
+  select {
+    font: inherit;
+    padding: 0.25rem;
+    background: var(--sl-color-black);
+    color: var(--sl-color-white);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.25rem;
+  }
+  input[type='color'] {
+    margin-left: auto;
+    inline-size: 2.5rem;
+    block-size: 1.75rem;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    align-self: end;
+  }
+  .paint {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin: 0;
+    padding: 0;
+    border: none;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-2);
+  }
+  .paint legend {
+    padding: 0 0 0.25rem;
+  }
+  .paint input[type='color'] {
+    margin-left: 0;
+  }
+  /* Each part shows only in the modes listed in its data-show. */
+  .paint [data-show] {
+    display: none;
+  }
+  .paint[data-mode='solid'] [data-show~='solid'],
+  .paint[data-mode='linear'] [data-show~='linear'],
+  .paint[data-mode='radial'] [data-show~='radial'],
+  .paint[data-mode='css'] [data-show~='css'] {
+    display: revert;
+  }
+  .paint .angle {
+    display: none;
+    grid-template-columns: 2.5rem minmax(6rem, 10rem);
+    align-items: center;
+  }
+  .paint[data-mode='linear'] .angle {
+    display: grid;
+  }
+  .paint .css {
+    flex: 1 1 16rem;
+    min-width: 0;
+    font: var(--sl-text-sm) var(--sl-font-mono);
+    padding: 0.3rem 0.5rem;
+    background: var(--sl-color-black);
+    color: var(--sl-color-white);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.25rem;
+  }
+  .looks {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-2);
+  }
+  output {
+    font-family: var(--sl-font-mono);
+    color: var(--sl-color-white);
+  }
+  .stage {
+    display: grid;
+    place-items: center;
+    min-height: 14rem;
+    padding: 1.5rem;
+    overflow-x: auto;
+    border-radius: 0.75rem;
+    background: var(--sl-color-gray-7, var(--sl-color-gray-6));
+    color: var(--sl-color-white);
+  }
+  .stage :global(svg) {
+    max-width: 100%;
+    height: auto;
+  }
+  .breakdown h3 {
+    font-size: var(--sl-text-base);
+    margin: 0 0 0.5rem;
+  }
+  .groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .groups :global(li) {
+    display: grid;
+    justify-items: center;
+    gap: 0.15rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    color: var(--sl-color-white);
+    min-width: 4.5rem;
+  }
+  .groups :global(li.dot) {
+    border: none;
+    align-content: center;
+    min-width: auto;
+    padding-inline: 0;
+  }
+  .groups :global(li.dot span) {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .groups :global(code) {
+    font-size: var(--sl-text-sm);
+  }
+  .groups :global(small) {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+  }
+  .status {
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-2);
+  }
+  .code {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+  .code pre {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    background: var(--sl-color-black);
+    border: 1px solid var(--sl-color-gray-5);
+    font-size: var(--sl-text-sm);
+  }
+</style>
